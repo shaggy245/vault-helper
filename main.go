@@ -10,34 +10,33 @@ import (
 	"github.com/mitchellh/go-homedir"
 )
 
-func updateTokenHelper(tokens map[string]string, tokenHelper string) error {
+func updateTokenHelper(tokens map[string]string, tokenPath string) error {
 	tokenJ, _ := json.Marshal(tokens)
-	err := ioutil.WriteFile(tokenHelper, tokenJ, 0644)
+	err := ioutil.WriteFile(tokenPath, tokenJ, 0644)
 	return err
 }
 
 func main() {
-	if len(os.Args) == 1 {
+	if len(os.Args) != 2 {
 		log.Fatal("Requires one arg of 'get', 'erase', or 'store'")
 	}
 
-	tokenHelper, err := homedir.Expand("~/.vault-tokens")
+	tokenPath, err := homedir.Expand("~/.vault-tokens")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	var tokenData map[string]string
+	tokenData := make(map[string]string)
 
-	if _, err := os.Stat(tokenHelper); err == nil {
-		data, err := ioutil.ReadFile(tokenHelper)
-		if err != nil {
-			log.Fatal(err)
-		}
+	data, err := ioutil.ReadFile(tokenPath)
+	if err == nil {
 		json.Unmarshal(data, &tokenData)
 	}
 
+	fmt.Println(tokenData)
+
 	vault_addr := os.Getenv("VAULT_ADDR")
-	if len(vault_addr) == 0 {
+	if vault_addr == "" {
 		log.Fatal("Environment variable $VAULT_ADDR must be set")
 	}
 
@@ -49,7 +48,7 @@ func main() {
 	case "erase":
 		// erase
 		delete(tokenData, vault_addr)
-		err := updateTokenHelper(tokenData, tokenHelper)
+		err := updateTokenHelper(tokenData, tokenPath)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -58,7 +57,7 @@ func main() {
 		var input string
 		fmt.Scanln(&input)
 		tokenData[vault_addr] = input
-		err := updateTokenHelper(tokenData, tokenHelper)
+		err := updateTokenHelper(tokenData, tokenPath)
 		if err != nil {
 			log.Fatal(err)
 		}
