@@ -45,7 +45,7 @@ func main() {
 	case "get":
 		// get
 		token := tokenData[vault_addr]
-		fmt.Println(token)
+		fmt.Print(token)
 	case "erase":
 		// erase
 		delete(tokenData, vault_addr)
